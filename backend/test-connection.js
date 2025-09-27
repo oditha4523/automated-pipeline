@@ -1,16 +1,32 @@
 const sql = require('mssql');
 require('dotenv').config();
 
-const config = {
-  server: 'chamod.database.windows.net',
-  database: 'automated-pipeline3',
-  user: 'oditha',
-  password: 'Chamod@4523',
-  options: {
-    encrypt: true,
-    trustServerCertificate: false
-  }
+// Parse connection string to get credentials
+const parseConnectionString = (connectionString) => {
+  const params = {};
+  const pairs = connectionString.split(';');
+  
+  pairs.forEach(pair => {
+    const [key, value] = pair.split('=');
+    if (key && value) {
+      params[key.trim()] = value.trim();
+    }
+  });
+  
+  return {
+    server: params.Server?.replace('tcp:', '').split(',')[0],
+    database: params.Database,
+    user: params.Uid,
+    password: params.Pwd,
+    options: {
+      encrypt: params.Encrypt === 'yes',
+      trustServerCertificate: params.TrustServerCertificate === 'no'
+    }
+  };
 };
+
+// Get config from environment variables
+const config = parseConnectionString(process.env.AZURE_SQL_CONNECTION);
 
 async function testConnection() {
   try {
